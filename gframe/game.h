@@ -109,6 +109,7 @@ struct Config {
 	int music_volume{ 50 };
 	int music_mode{ 1 };
 	bool window_maximized{ false };
+	bool auto_dpi_scale{ true };
 	int window_width{ GAME_WINDOW_WIDTH };
 	int window_height{ GAME_WINDOW_HEIGHT };
 	int resize_popup_menu{ 0 };
@@ -262,10 +263,16 @@ public:
 	void ResizePosSelectButtons();
 	void ResizeCardSelectButtons(irr::gui::IGUIWindow* window, irr::gui::IGUIStaticText** labels, irr::gui::IGUIButton** images,
 		irr::gui::IGUIScrollBar* scrollbar, irr::gui::IGUIButton* buttonOK, const std::vector<ClientCard*>& cards);
+	void CacheGuiBasePositions(irr::gui::IGUIElement* element);
+	void ResizeFixedWindow(irr::gui::IGUIElement* element, irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	void ScaleGuiChildren(irr::gui::IGUIElement* element);
+	void ResizeListBoxItems();
+	void ResizeCategoryWindow();
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
 	irr::core::vector2di Resize(irr::s32 x, irr::s32 y);
 	irr::core::vector2di ResizeReverse(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizeRelative(irr::core::recti rect);
 	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
 	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti ResizeCardImgWin(irr::s32 x, irr::s32 y, irr::s32 mx, irr::s32 my);
@@ -371,6 +378,7 @@ public:
 	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnCardImgInfo;
 	// {cover_idx, rotated} for buttons showing a facedown card (cover) image
 	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnFacedownImgInfo;
+	std::unordered_map<irr::gui::IGUIElement*, irr::core::recti> guiBasePositions;
 	//card image
 	irr::gui::IGUIStaticText* wCardImg{};
 	irr::gui::IGUIImage* imgCard{};
