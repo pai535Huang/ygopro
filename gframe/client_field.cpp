@@ -568,7 +568,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 	bool quickmode = true;
 	mainGame->gMutex.lock();
 	for(auto option : select_options) {
-		if(mainGame->GetGUIFontDimension(dataManager.GetDesc(option)).Width > 310) {
+		if(mainGame->GetGUIFontDimension(dataManager.GetDesc(option)).Width > 310 * mainGame->xScale) {
 			quickmode = false;
 			break;
 		}
@@ -589,14 +589,14 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(i < count);
 		irr::core::recti pos = mainGame->wOptions->getRelativePosition();
-		int newheight = 30 + 40 * (scrollbar ? 5 : count);
+		int newheight = (30 + 40 * (scrollbar ? 5 : count)) * mainGame->yScale;
 		int oldheight = pos.LowerRightCorner.Y - pos.UpperLeftCorner.Y;
 		pos.UpperLeftCorner.Y = pos.UpperLeftCorner.Y + (oldheight - newheight) / 2;
-		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 375 : 350);
+		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (scrollbar ? 375 : 350) * mainGame->xScale;
 		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + newheight;
 		mainGame->wOptions->setRelativePosition(pos);
 	} else {
-		mainGame->SetStaticText(mainGame->stOptions, 310, mainGame->guiFont, dataManager.GetDesc(select_options[0]));
+		mainGame->SetStaticText(mainGame->stOptions, (irr::u32)(310 * mainGame->xScale), mainGame->guiFont, dataManager.GetDesc(select_options[0]));
 		mainGame->stOptions->setVisible(true);
 		mainGame->btnOptionp->setVisible(false);
 		mainGame->btnOptionn->setVisible(count > 1);
@@ -604,7 +604,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 		for(int i = 0; i < 5; i++)
 			mainGame->btnOption[i]->setVisible(false);
 		irr::core::recti pos = mainGame->wOptions->getRelativePosition();
-		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 140;
+		pos.LowerRightCorner.Y = pos.UpperLeftCorner.Y + 140 * mainGame->yScale;
 		mainGame->wOptions->setRelativePosition(pos);
 	}
 	if(select_hint)
