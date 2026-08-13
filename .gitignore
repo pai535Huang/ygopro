@@ -1,5 +1,8 @@
 .DS_Store
 
+/AGENTS.md
+.opencode/
+
 /deck
 /expansions
 /fonts
