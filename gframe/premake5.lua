@@ -77,3 +77,4 @@ project "YGOPro"
 
     filter "system:linux"
         links { "GL", "X11", "dl", "pthread" }
+        linkoptions { "-Wl,--wrap=XMapRaised" }

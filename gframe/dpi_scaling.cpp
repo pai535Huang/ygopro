@@ -16,9 +16,7 @@ namespace ygo {
 
 namespace {
 
-unsigned int GetScaledFontSize(unsigned int baseSize, float scale, float maxScale, unsigned int minSize) {
-	if(scale > maxScale)
-		scale = maxScale;
+unsigned int GetScaledFontSize(unsigned int baseSize, float scale, unsigned int minSize) {
 	unsigned int size = static_cast<unsigned int>(baseSize * scale + 0.5f);
 	return size > minSize ? size : minSize;
 }
@@ -138,15 +136,16 @@ float GetAutoUIScale() {
 }
 
 unsigned int GetTextFontSizeForScale(unsigned int baseSize, float scale) {
-	return GetScaledFontSize(baseSize, scale, scale, 9);
+	return GetScaledFontSize(baseSize, scale, 9);
 }
 
+// Fonts and skin metrics must follow the same scale as the control rectangles.
 unsigned int GetGuiFontSizeForScale(unsigned int baseSize, float scale) {
-	return GetScaledFontSize(baseSize, scale, 1.75f, 9);
+	return GetScaledFontSize(baseSize, scale, 9);
 }
 
 unsigned int GetGuiSkinSizeForScale(unsigned int baseSize, float scale) {
-	return GetScaledFontSize(baseSize, scale, 1.75f, baseSize);
+	return GetScaledFontSize(baseSize, scale, 1);
 }
 
 }

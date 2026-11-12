@@ -12,6 +12,7 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <algorithm>
+#include <cmath>
 #include <thread>
 #include <chrono>
 #ifdef _WIN32
@@ -1204,7 +1205,9 @@ void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, i
 			env->removeFocus(scrCardText);
 		return;
 	}
-	format_text = SetStaticText(pControl, cWidth-25, font, text);
+	const irr::s32 textWidth = static_cast<irr::s32>(cWidth)
+		- scrCardText->getRelativePosition().getWidth() - static_cast<irr::s32>(5 * xScale);
+	format_text = SetStaticText(pControl, std::max<irr::s32>(1, textWidth), font, text);
 	irr::u32 fontheight = font->getDimension(L"A").Height + font->getKerningHeight();
 	irr::u32 step = (font->getDimension(format_text.c_str()).Height - cHeight) / fontheight + 1;
 	scrCardText->setVisible(true);
@@ -1684,14 +1687,14 @@ void Game::ShowCardInfo(int code, bool resize) {
 		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
 	}
 	stName->setText(formatBuffer);
-	if((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+	if((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - GetGuiFontSizeForScale(gameConf.textfontsize, yScale))
 		stName->setToolTipText(formatBuffer);
 	else
 		stName->setToolTipText(nullptr);
-	const irr::s32 lineHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + 4, 23);
-	const irr::s32 textLeft = 15;
-	const irr::s32 textRight = 300 * xScale - 13;
-	irr::s32 textTop = stName->getRelativePosition().LowerRightCorner.Y + 5;
+	const irr::s32 lineHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(4, yScale), GetGuiSkinSizeForScale(23, yScale));
+	const irr::s32 textLeft = 15 * xScale;
+	const irr::s32 textRight = 287 * xScale;
+	irr::s32 textTop = stName->getRelativePosition().LowerRightCorner.Y + static_cast<irr::s32>(5 * yScale);
 	int offset = 0;
 	if (is_valid && !gameConf.hide_setname) {
 		auto& cd = cit->second;
@@ -1720,7 +1723,7 @@ void Game::ShowCardInfo(int code, bool resize) {
 		stInfo->setText(formatBuffer);
 		int offset_info = 0;
 		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
-		if(dtxt.Width > (textRight - textLeft) - 15)
+		if(dtxt.Width > (textRight - textLeft) - 15 * xScale)
 			offset_info = lineHeight;
 		const wchar_t* form = L"\u2605";
 		wchar_t adBuffer[64]{};
@@ -1751,7 +1754,7 @@ void Game::ShowCardInfo(int code, bool resize) {
 		stDataInfo->setText(formatBuffer);
 		int offset_arrows = offset_info;
 		dtxt = guiFont->getDimension(formatBuffer);
-		if(dtxt.Width > (textRight - textLeft) - 15)
+		if(dtxt.Width > (textRight - textLeft) - 15 * xScale)
 			offset_arrows += lineHeight;
 		stInfo->setRelativePosition(irr::core::rect<irr::s32>(textLeft, textTop, textRight, textTop + lineHeight + offset_info));
 		textTop += lineHeight + offset_info;
@@ -1760,7 +1763,7 @@ void Game::ShowCardInfo(int code, bool resize) {
 		stSetName->setRelativePosition(irr::core::rect<irr::s32>(textLeft, textTop, 296 * xScale, textTop + offset));
 		textTop += offset;
 		stText->setRelativePosition(irr::core::rect<irr::s32>(textLeft, textTop, 287 * xScale, 324 * yScale));
-		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(287 * xScale - 20, textTop, 287 * xScale, 324 * yScale));
+		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(267 * xScale, textTop, 287 * xScale, 324 * yScale));
 	}
 	else {
 		if (is_valid) {
@@ -1776,7 +1779,7 @@ void Game::ShowCardInfo(int code, bool resize) {
 		stSetName->setRelativePosition(irr::core::rect<irr::s32>(textLeft, textTop, 296 * xScale, textTop + offset));
 		textTop += offset;
 		stText->setRelativePosition(irr::core::rect<irr::s32>(textLeft, textTop, 287 * xScale, 324 * yScale));
-		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(287 * xScale - 20, textTop, 287 * xScale, 324 * yScale));
+		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(267 * xScale, textTop, 287 * xScale, 324 * yScale));
 	}
 	showingcode = code;
 	showingtext = dataManager.GetText(code);
@@ -2047,6 +2050,7 @@ void Game::OnResize() {
 	skin->setSize(irr::gui::EGDS_TEXT_DISTANCE_X, GetGuiSkinSizeForScale(2, yScale));
 	skin->setSize(irr::gui::EGDS_TEXT_DISTANCE_Y, GetGuiSkinSizeForScale(1, yScale));
 	skin->setSize(irr::gui::EGDS_CHECK_BOX_WIDTH, GetGuiSkinSizeForScale(18, yScale));
+	ResizeCheckboxIcon();
 	skin->setSize(irr::gui::EGDS_BUTTON_WIDTH, GetGuiSkinSizeForScale(80, yScale));
 	skin->setSize(irr::gui::EGDS_BUTTON_HEIGHT, GetGuiSkinSizeForScale(30, yScale));
 	skin->setSize(irr::gui::EGDS_MENU_HEIGHT, GetGuiSkinSizeForScale(30, yScale));
@@ -2158,30 +2162,48 @@ void Game::OnResize() {
 
 	stHintMsg->setRelativePosition(ResizeWin(660 - 160 * xScale, 60, 660 + 160 * xScale, 90));
 
-	irr::core::recti tabHelperPos = irr::core::recti(0, 0, 300 * xScale - 50, 365 * yScale - 65);
+	wInfos->setRelativePosition(Resize(1, 275, 301, 639));
+	wInfos->setTabHeight(std::max<irr::s32>(guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(8, yScale), GetGuiSkinSizeForScale(24, yScale)));
+	wInfos->setTabExtraWidth(GetGuiSkinSizeForScale(16, yScale));
+	// Irrlicht updates the tab header height without repositioning the pages.
+	// Scale their cached margins as well, including the inset settings pages.
+	const irr::s32 basePageTop = guiBasePositions.at(wInfos->getTab(0)).UpperLeftCorner.Y;
+	for(irr::s32 i = 0; i < wInfos->getTabCount(); ++i) {
+		auto tab = wInfos->getTab(i);
+		const auto& base = guiBasePositions.at(tab);
+		auto rect = ResizeRelative(base);
+		rect.UpperLeftCorner.Y = wInfos->getTabHeight() + (2 + base.UpperLeftCorner.Y - basePageTop) * yScale;
+		tab->setRelativePosition(rect);
+	}
+
+	irr::core::recti tabHelperPos = irr::core::recti(0, 0, 250 * xScale, 300 * yScale);
+	scrTabHelper->setSmallStep(GetGuiSkinSizeForScale(30, yScale));
+	scrTabHelper->setLargeStep(tabHelperPos.getHeight() - scrTabHelper->getSmallStep());
 	tabHelper->setRelativePosition(tabHelperPos);
 	ScaleGuiChildren(tabHelper);
-	scrTabHelper->setRelativePosition(irr::core::recti(tabHelperPos.LowerRightCorner.X + 2, 0, tabHelperPos.LowerRightCorner.X + 22, tabHelperPos.LowerRightCorner.Y));
+	scrTabHelper->setRelativePosition(irr::core::recti(tabHelperPos.LowerRightCorner.X + 2 * xScale, 0, tabHelperPos.LowerRightCorner.X + 22 * xScale, tabHelperPos.LowerRightCorner.Y));
 	irr::s32 tabHelperLastY = elmTabHelperLast->getRelativePosition().LowerRightCorner.Y;
 	if(tabHelperLastY > tabHelperPos.LowerRightCorner.Y) {
-		scrTabHelper->setMax(tabHelperLastY - tabHelperPos.LowerRightCorner.Y + 5);
+		scrTabHelper->setMax(tabHelperLastY - tabHelperPos.LowerRightCorner.Y + 5 * yScale);
 		scrTabHelper->setPos(0);
 		scrTabHelper->setVisible(true);
 	}
 	else
 		scrTabHelper->setVisible(false);
 
-	irr::core::recti tabSystemPos = irr::core::recti(0, 0, 300 * xScale - 50, 365 * yScale - 65);
+	irr::core::recti tabSystemPos = irr::core::recti(0, 0, 250 * xScale, 300 * yScale);
+	scrTabSystem->setSmallStep(GetGuiSkinSizeForScale(30, yScale));
+	scrTabSystem->setLargeStep(tabSystemPos.getHeight() - scrTabSystem->getSmallStep());
 	tabSystem->setRelativePosition(tabSystemPos);
 	ScaleGuiChildren(tabSystem);
-	irr::s32 systemScrollRight = 20 + (300 * xScale) - 70;
+	irr::s32 systemScrollRight = 250 * xScale;
 	scrSoundVolume->setRelativePosition(irr::core::recti(scrSoundVolume->getRelativePosition().UpperLeftCorner.X, scrSoundVolume->getRelativePosition().UpperLeftCorner.Y, systemScrollRight, scrSoundVolume->getRelativePosition().LowerRightCorner.Y));
 	scrMusicVolume->setRelativePosition(irr::core::recti(scrMusicVolume->getRelativePosition().UpperLeftCorner.X, scrMusicVolume->getRelativePosition().UpperLeftCorner.Y, systemScrollRight, scrMusicVolume->getRelativePosition().LowerRightCorner.Y));
 	scrResizePopupMenu->setRelativePosition(irr::core::recti(scrResizePopupMenu->getRelativePosition().UpperLeftCorner.X, scrResizePopupMenu->getRelativePosition().UpperLeftCorner.Y, systemScrollRight, scrResizePopupMenu->getRelativePosition().LowerRightCorner.Y));
-	scrTabSystem->setRelativePosition(irr::core::recti(tabSystemPos.LowerRightCorner.X + 2, 0, tabSystemPos.LowerRightCorner.X + 22, tabSystemPos.LowerRightCorner.Y));
+	scrTabSystem->setRelativePosition(irr::core::recti(tabSystemPos.LowerRightCorner.X + 2 * xScale, 0, tabSystemPos.LowerRightCorner.X + 22 * xScale, tabSystemPos.LowerRightCorner.Y));
 	irr::s32 tabSystemLastY = elmTabSystemLast->getRelativePosition().LowerRightCorner.Y;
 	if(tabSystemLastY > tabSystemPos.LowerRightCorner.Y) {
-		scrTabSystem->setMax(tabSystemLastY - tabSystemPos.LowerRightCorner.Y + 5);
+		scrTabSystem->setMax(tabSystemLastY - tabSystemPos.LowerRightCorner.Y + 5 * yScale);
 		scrTabSystem->setPos(0);
 		scrTabSystem->setVisible(true);
 	} else
@@ -2189,11 +2211,8 @@ void Game::OnResize() {
 
 	wCardImg->setRelativePosition(ResizeCardImgWin(1, 1, 20, 18));
 	imgCard->setRelativePosition(ResizeCardImgWin(10, 9, 0, 0));
-	wInfos->setRelativePosition(Resize(1, 275, 301, 639));
-	wInfos->setTabHeight(std::max<irr::s32>(guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(8, yScale), GetGuiSkinSizeForScale(24, 1.0f)));
-	wInfos->setTabExtraWidth(GetGuiSkinSizeForScale(18, yScale));
-	irr::s32 cardInfoLineHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + 4, 23);
-	stName->setRelativePosition(irr::core::recti(10, 10, 300 * xScale - 13, 10 + cardInfoLineHeight));
+	irr::s32 cardInfoLineHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(4, yScale), GetGuiSkinSizeForScale(23, yScale));
+	stName->setRelativePosition(irr::core::recti(10 * xScale, 10 * yScale, 287 * xScale, 10 * yScale + cardInfoLineHeight));
 	lstLog->setRelativePosition(Resize(10, 10, 290, 290));
 	if(showingcode)
 		ShowCardInfo(showingcode, true);
@@ -2281,7 +2300,7 @@ void Game::ResizeCategoryWindow() {
 	const irr::s32 rows = 8;
 	const irr::s32 margin = GetGuiSkinSizeForScale(10, yScale);
 	const irr::s32 gap = GetGuiSkinSizeForScale(8, yScale);
-	const irr::s32 rowHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + 6, GetGuiSkinSizeForScale(25, yScale));
+	const irr::s32 rowHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(6, yScale), GetGuiSkinSizeForScale(25, yScale));
 	const irr::s32 buttonWidth = GetGuiSkinSizeForScale(100, yScale);
 	const irr::s32 buttonHeight = std::max<irr::s32>(rowHeight, GetGuiSkinSizeForScale(25, yScale));
 	irr::s32 columnWidth = 0;
@@ -2308,12 +2327,90 @@ void Game::ResizeCategoryWindow() {
 	irr::s32 top = anchor.LowerRightCorner.Y - anchor.getHeight() / 2;
 	wCategories->setRelativePosition(irr::core::recti(left, top, anchor.LowerRightCorner.X, top + height));
 }
+// The default skin's check mark is a fixed bitmap, independent of checkbox size.
+void Game::ResizeCheckboxIcon() {
+	const irr::u32 size = GetGuiSkinSizeForScale(10, yScale);
+	if(size == checkboxIconSize)
+		return;
+	auto skin = env->getSkin();
+	auto bank = skin->getSpriteBank();
+	if(!bank)
+		return;
+	auto image = driver->createImage(irr::video::ECF_A8R8G8B8, irr::core::dimension2du(size, size));
+	if(!image)
+		return;
+	// Rasterize two strokes at the target resolution with antialiased edges.
+	auto distance = [](float x, float y, float ax, float ay, float bx, float by) {
+		float dx = bx - ax, dy = by - ay;
+		float t = std::max(0.0f, std::min(1.0f, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+		return std::sqrt((x - ax - t * dx) * (x - ax - t * dx) + (y - ay - t * dy) * (y - ay - t * dy));
+	};
+	const float scale = size / 10.0f;
+	for(irr::u32 y = 0; y < size; ++y) {
+		for(irr::u32 x = 0; x < size; ++x) {
+			float px = (x + 0.5f) / scale, py = (y + 0.5f) / scale;
+			float d = std::min(distance(px, py, 1.5f, 5.0f, 4.0f, 7.5f), distance(px, py, 4.0f, 7.5f, 8.5f, 2.5f));
+			float alpha = std::max(0.0f, std::min(1.0f, (0.7f - d) * scale + 0.5f));
+			image->setPixel(x, y, irr::video::SColor(static_cast<irr::u32>(alpha * 255 + 0.5f), 255, 255, 255));
+		}
+	}
+	irr::core::stringc name("#checkbox-check-");
+	name += size;
+	auto texture = driver->addTexture(name.c_str(), image);
+	image->drop();
+	if(!texture)
+		return;
+	if(checkboxSprite < 0) {
+		checkboxSprite = bank->addTextureAsSprite(texture);
+	} else {
+		const auto& frame = bank->getSprites()[checkboxSprite].Frames[0];
+		auto oldTexture = bank->getTexture(frame.textureNumber);
+		bank->setTexture(frame.textureNumber, texture);
+		bank->getPositions()[frame.rectNumber] = irr::core::recti(0, 0, size, size);
+		driver->removeTexture(oldTexture);
+	}
+	if(checkboxSprite >= 0) {
+		skin->setIcon(irr::gui::EGDI_CHECK_BOX_CHECKED, checkboxSprite);
+		checkboxIconSize = size;
+	}
+}
+
+bool Game::ScrollSettings(const irr::SEvent& event) {
+	if(event.EventType != irr::EET_MOUSE_INPUT_EVENT || event.MouseInput.Event != irr::EMIE_MOUSE_WHEEL || event.MouseInput.Wheel == 0)
+		return false;
+	auto hit = env->getRootGUIElement()->getElementFromPoint(irr::core::position2di(event.MouseInput.X, event.MouseInput.Y));
+	irr::gui::IGUIScrollBar* scrollbar = nullptr;
+	for(auto element = hit; element; element = element->getParent()) {
+		if(element == tabSystem || element == scrTabSystem) {
+			scrollbar = scrTabSystem;
+			break;
+		}
+		if(element == tabHelper || element == scrTabHelper) {
+			scrollbar = scrTabHelper;
+			break;
+		}
+		// Keep wheel adjustment of volume sliders and combo boxes intact.
+		if(element->getType() == irr::gui::EGUIET_SCROLL_BAR || element->getType() == irr::gui::EGUIET_COMBO_BOX)
+			return false;
+	}
+	if(!scrollbar || !scrollbar->isVisible())
+		return false;
+	const float delta = event.MouseInput.Wheel * scrollbar->getSmallStep();
+	scrollbar->setPos(scrollbar->getPos() - static_cast<irr::s32>(std::round(delta)));
+	irr::SEvent changed{};
+	changed.EventType = irr::EET_GUI_EVENT;
+	changed.GUIEvent.Caller = scrollbar;
+	changed.GUIEvent.EventType = irr::gui::EGET_SCROLL_BAR_CHANGED;
+	dField.OnCommonEvent(changed);
+	return true;
+}
+
 void Game::ResizeChatInputWindow() {
-	irr::s32 x = wInfos->getRelativePosition().LowerRightCorner.X + 6;
+	irr::s32 x = wInfos->getRelativePosition().LowerRightCorner.X + static_cast<irr::s32>(6 * xScale);
 	if(is_building) x = 802 * xScale;
 	irr::s32 chatHeight = std::max<irr::s32>(guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(6, yScale), GetGuiSkinSizeForScale(25, yScale));
 	wChat->setRelativePosition(irr::core::recti(x, window_size.Height - chatHeight, window_size.Width, window_size.Height));
-	ebChatInput->setRelativePosition(irr::core::recti(3, 2, window_size.Width - wChat->getRelativePosition().UpperLeftCorner.X - 6, chatHeight - 3));
+	ebChatInput->setRelativePosition(irr::core::recti(3 * xScale, 2 * yScale, window_size.Width - wChat->getRelativePosition().UpperLeftCorner.X - 6 * xScale, chatHeight - 3 * yScale));
 }
 void Game::ResizeCmdMenu() {
 	irr::s32 width = GetPopupMenuButtonWidth();
@@ -2331,6 +2428,7 @@ void Game::ResizeCmdMenu() {
 	btnReset->setRelativePosition(irr::core::recti(0, 0, width, height));
 }
 void Game::ResizePosSelectButtons() {
+	ScaleGuiChildren(wPosSelect);
 	float _xScale = gameConf.resize_select_window ? xScale : 1.0f;
 	float _yScale = gameConf.resize_select_window ? yScale : 1.2f;
 	irr::s32 imgHeight = CARD_IMG_HEIGHT * 0.5f * _yScale + 0.5f;
@@ -2343,7 +2441,7 @@ void Game::ResizePosSelectButtons() {
 	if(btnPSDU->isVisible()) { totalWidth += btnPosWidth; visCount++; }
 	if(btnPSDD->isVisible()) { totalWidth += btnPosWidth; visCount++; }
 	totalWidth += (visCount - 1) * gap;
-	irr::s32 posY = 19 + 16 * _yScale;
+	irr::s32 posY = GetGuiSkinSizeForScale(19, yScale) + 16 * _yScale;
 	irr::s32 windowWidth = 30 * _xScale * 2 + stride * 3 - gap;
 	irr::s32 windowHeight = posY + 155 * _yScale;
 	irr::s32 posX = (windowWidth - totalWidth) / 2;
@@ -2371,6 +2469,7 @@ void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
 								   irr::gui::IGUIScrollBar* scrollbar,
 								   irr::gui::IGUIButton* buttonOK,
 								   const std::vector<ClientCard*>& cards) {
+	ScaleGuiChildren(window);
 	float _xScale = gameConf.resize_select_window ? xScale : 1.0f;
 	float _yScale = gameConf.resize_select_window ? yScale : 1.2f;
 	irr::s32 gap = 5 * _xScale + 0.5f;
@@ -2383,9 +2482,9 @@ void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
 		startpos = 30 * _xScale + stride * (5 - (int)cards.size()) / 2;
 		ct = cards.size();
 	}
-	irr::s32 top = 19 + 11 * _yScale;
+	irr::s32 top = GetGuiSkinSizeForScale(19, yScale) + 11 * _yScale;
 	irr::s32 labelHeight = 20 * _yScale;
-	irr::s32 minTextHeight = gameConf.textfontsize * 1.4f + 0.5f;
+	irr::s32 minTextHeight = guiFont->getDimension(L"A").Height + GetGuiSkinSizeForScale(4, yScale);
 	if (labelHeight < minTextHeight) labelHeight = minTextHeight;
 	irr::s32 btnTop = top + labelHeight + gap;
 	for (int i = 0; i < ct; ++i) {
@@ -2395,7 +2494,6 @@ void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
 	irr::s32 barTop = btnTop + btnHeight + gap;
 	irr::s32 barWidth = stride * ct - gap;
 	irr::s32 barHeight = 20 * _yScale;
-	if (barHeight > 25) barHeight = 25;
 	scrollbar->setRelativePosition(irr::core::recti(startpos, barTop, startpos + barWidth, barTop + barHeight));
 	irr::s32 btnOKWidth = 80 * _xScale;
 	irr::s32 btnOKHeight = 25 * _yScale;

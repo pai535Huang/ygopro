@@ -18,6 +18,8 @@ void UpdateDeck() {
 	DuelClient::SendUpdateDeck(deckManager.current_deck);
 }
 bool MenuHandler::OnEvent(const irr::SEvent& event) {
+	if(mainGame->ScrollSettings(event))
+		return true;
 	if(mainGame->dField.OnCommonEvent(event))
 		return false;
 	switch(event.EventType) {

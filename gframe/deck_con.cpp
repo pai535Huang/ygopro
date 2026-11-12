@@ -136,6 +136,8 @@ void DeckBuilder::Terminate() {
 		mainGame->device->closeDevice();
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
+	if(mainGame->ScrollSettings(event))
+		return true;
 	if(mainGame->dField.OnCommonEvent(event))
 		return false;
 	auto& _datas = dataManager.GetDataTable();

@@ -15,6 +15,8 @@
 namespace ygo {
 
 bool ClientField::OnEvent(const irr::SEvent& event) {
+	if(mainGame->ScrollSettings(event))
+		return true;
 	if(OnCommonEvent(event))
 		return false;
 	switch(event.EventType) {
@@ -1930,7 +1932,9 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					break;
 				}
 				irr::u32 pos = mainGame->scrCardText->getPos();
-				mainGame->SetStaticText(mainGame->stText, mainGame->stText->getRelativePosition().getWidth() - 25, mainGame->guiFont, mainGame->showingtext, pos);
+				const irr::s32 textWidth = mainGame->stText->getRelativePosition().getWidth()
+					- mainGame->scrCardText->getRelativePosition().getWidth() - static_cast<irr::s32>(5 * mainGame->xScale);
+				mainGame->SetStaticText(mainGame->stText, std::max<irr::s32>(1, textWidth), mainGame->guiFont, mainGame->showingtext, pos);
 				return true;
 				break;
 			}
@@ -1951,14 +1955,12 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				break;
 			}
 			case SCROLL_TAB_HELPER: {
-				irr::core::rect<irr::s32> pos = mainGame->tabHelper->getRelativePosition();
-				mainGame->tabHelper->setRelativePosition(irr::core::recti(0, mainGame->scrTabHelper->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
+				mainGame->tabHelper->setRelativePosition(irr::core::position2di(0, -mainGame->scrTabHelper->getPos()));
 				return true;
 				break;
 			}
 			case SCROLL_TAB_SYSTEM: {
-				irr::core::rect<irr::s32> pos = mainGame->tabSystem->getRelativePosition();
-				mainGame->tabSystem->setRelativePosition(irr::core::recti(0, mainGame->scrTabSystem->getPos() * -1, pos.LowerRightCorner.X, pos.LowerRightCorner.Y));
+				mainGame->tabSystem->setRelativePosition(irr::core::position2di(0, -mainGame->scrTabSystem->getPos()));
 				return true;
 				break;
 			}

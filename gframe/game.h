@@ -258,6 +258,8 @@ public:
 	void SwapYesNoButtons(bool no_first);
 
 	void OnResize(); // caller must hold gMutex
+	void ResizeCheckboxIcon();
+	bool ScrollSettings(const irr::SEvent& event);
 	void ResizeChatInputWindow();
 	void ResizeCmdMenu();
 	void ResizePosSelectButtons();
@@ -350,6 +352,8 @@ public:
 	irr::core::dimension2d<irr::u32> window_size;
 	float xScale{ 1.0f };
 	float yScale{ 1.0f };
+	irr::s32 checkboxSprite{ -1 };
+	irr::u32 checkboxIconSize{ 0 };
 
 	ClientField dField;
 	DeckBuilder deckBuilder;
